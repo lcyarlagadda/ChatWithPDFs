@@ -4,13 +4,13 @@ A modern web application that allows you to chat with your PDF documents using A
 
 ## Features
 
-- 📄 **PDF Upload**: Upload multiple PDF files for processing
-- 🤖 **AI Chat**: Ask questions about your documents using Mistral-7B
-- 🔍 **Hybrid Retrieval**: Combines dense and sparse retrieval for better results
-- 📊 **Real-time Metrics**: View processing times and token usage
-- 🎨 **Modern UI**: Clean, responsive interface built with Tailwind CSS
-- ⚡ **Streaming Responses**: Real-time answer generation
-- 📱 **Mobile Friendly**: Works on desktop and mobile devices
+- **PDF Upload**: Upload multiple PDF files for processing
+- **AI Chat**: Ask questions about your documents using Mistral-7B
+- **Hybrid Retrieval**: Combines dense and sparse retrieval for better results
+- **Real-time Metrics**: View processing times and token usage
+- **Modern UI**: Clean, responsive interface built with Tailwind CSS
+- **Streaming Responses**: Real-time answer generation
+- **Mobile Friendly**: Works on desktop and mobile devices
 
 ## Architecture
 
@@ -229,4 +229,5 @@ This project is open source and available under the [MIT License](LICENSE).
 - [Hugging Face](https://huggingface.co/) for model hosting
 - [Google Colab](https://colab.research.google.com/) for free GPU access
 - [Next.js](https://nextjs.org/) and [FastAPI](https://fastapi.tiangolo.com/) for the frameworks
+
 

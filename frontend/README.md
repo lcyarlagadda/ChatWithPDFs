@@ -311,3 +311,4 @@ Once the app is running:
 - Review the main `README.md` for architecture overview
 - Open an issue on GitHub if you find bugs
 
+

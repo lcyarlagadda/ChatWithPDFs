@@ -1,18 +1,13 @@
-import fitz
-import re
+"""Model management for loading and caching ML models"""
+
 import os
-import tiktoken
-import numpy as np
-from typing import List, Dict
-from sentence_transformers import SentenceTransformer
-from sentence_transformers import CrossEncoder
+import logging
+from sentence_transformers import SentenceTransformer, CrossEncoder
 from transformers import AutoTokenizer, AutoModelForCausalLM, BitsAndBytesConfig
 import torch
-from rank_bm25 import BM25Okapi
-import time
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 class ModelManager:
     """Manages loading and caching of ML models"""
@@ -24,7 +19,7 @@ class ModelManager:
         self._mistral_tokenizer = None
     
     def get_embedding_model(self):
-        """Get or load the embedding model"""
+        """Get or load embedding model"""
         if self._embedding_model is None:
             logger.info("Loading embedding model...")
             self._embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
@@ -32,7 +27,7 @@ class ModelManager:
         return self._embedding_model
     
     def get_reranker(self):
-        """Get or load the reranker model"""
+        """Get or load reranker model"""
         if self._reranker is None:
             logger.info("Loading reranker model...")
             self._reranker = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
@@ -40,12 +35,12 @@ class ModelManager:
         return self._reranker
     
     def get_mistral_model(self):
-        """Get or load the Mistral model"""
+        """Get or load Mistral language model"""
         if self._mistral_model is None or self._mistral_tokenizer is None:
             logger.info("Loading Mistral model...")
             hf_token = os.getenv("HUGGINGFACE_HUB_TOKEN")
             if not hf_token:
-                raise ValueError("Hugging Face token not found. Please set HUGGINGFACE_HUB_TOKEN environment variable.")
+                raise ValueError("HUGGINGFACE_HUB_TOKEN environment variable not set")
             
             bnb_config = BitsAndBytesConfig(
                 load_in_4bit=True,
@@ -55,7 +50,7 @@ class ModelManager:
             )
             
             tokenizer = AutoTokenizer.from_pretrained(
-                "mistralai/Mistral-7B-Instruct-v0.1", 
+                "mistralai/Mistral-7B-Instruct-v0.1",
                 token=hf_token
             )
             if tokenizer.pad_token is None:
@@ -72,5 +67,6 @@ class ModelManager:
             self._mistral_model = model
             self._mistral_tokenizer = tokenizer
             logger.info("Mistral model loaded")
+        
         return self._mistral_model, self._mistral_tokenizer
 
