@@ -5,7 +5,7 @@ import time
 from typing import Dict, List
 import logging
 
-from utils.tokenizer import TokenCounter
+from ..utils.tokenizer import TokenCounter
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,7 @@ class RAGService:
         self.tokenizer = tokenizer
         self.token_counter = TokenCounter()
     
-    def answer_question(self, question: str, k: int = 3) -> Dict:
+    def answer_question(self, question: str, k: int = 3, retriever=None) -> Dict:
         """Answer a question using RAG"""
         start_time = time.time()
         
@@ -32,7 +32,8 @@ class RAGService:
         retrieval_k = min(k * 2, 8) if is_general else k
         retrieval_start = time.time()
         
-        retrieved_chunks = self.retriever.retrieve(question, k=retrieval_k)
+        active_retriever = retriever or self.retriever
+        retrieved_chunks = active_retriever.retrieve(question, k=retrieval_k)
         retrieval_time = time.time() - retrieval_start
         
         # Optimize context window

@@ -15,6 +15,7 @@ from ..services.embedding_service import EmbeddingService
 from ..services.retrieval_service import HybridRetriever
 from ..services.rag_service import RAGService
 from ..services.cache_service import ResponseCache
+from ..services.llama_index_service import LlamaIndexService
 from ..core.models import ModelManager
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,7 @@ router = APIRouter()
 
 # Global state
 rag_service: Optional[RAGService] = None
+llama_index_service: Optional[LlamaIndexService] = None
 pdf_service = PDFService(max_workers=8)
 embedding_service = EmbeddingService(batch_size=16)
 model_manager = ModelManager()
@@ -49,7 +51,7 @@ async def upload_pdfs(
     showChunks: bool = Form(False)
 ):
     """Upload and process PDF files"""
-    global rag_service
+    global rag_service, llama_index_service
     
     try:
         logger.info(f"Processing {len(files)} PDF files")
@@ -107,6 +109,15 @@ async def upload_pdfs(
         
         # Create RAG service
         rag_service = RAGService(retriever, mistral_model, mistral_tokenizer)
+
+        # Create LlamaIndex retriever
+        try:
+            llama_index_service = LlamaIndexService()
+            llama_index_service.build_index(chunks_with_embeddings)
+            logger.info("LlamaIndex retriever initialized")
+        except Exception as e:
+            llama_index_service = None
+            logger.warning(f"LlamaIndex initialization failed: {e}")
         
         # Cleanup
         for temp_file in temp_files:
@@ -135,7 +146,7 @@ async def upload_pdfs(
 @router.post("/ask-question", response_model=QuestionResponse)
 async def ask_question(request: QuestionRequest):
     """Ask a question about uploaded PDFs"""
-    global rag_service
+    global rag_service, llama_index_service
     
     if rag_service is None:
         raise HTTPException(status_code=400, detail="No PDFs uploaded yet. Please upload PDFs first.")
@@ -158,9 +169,20 @@ async def ask_question(request: QuestionRequest):
                 from_cache=True
             )
         
+        retriever_type = request.settings.get('retrieverType', 'Hybrid (Dense + Sparse)')
+        retriever_override = None
+        if retriever_type == 'LlamaIndex':
+            if llama_index_service is None or not llama_index_service.is_ready():
+                raise HTTPException(status_code=400, detail="LlamaIndex retriever not ready. Please upload PDFs again.")
+            retriever_override = llama_index_service
+
         # Get answer
         k = request.settings.get('numChunks', 3)
-        result = rag_service.answer_question(request.question, k=k)
+        result = rag_service.answer_question(
+            request.question,
+            k=k,
+            retriever=retriever_override
+        )
         
         # Extract citations
         citations = []
@@ -180,7 +202,8 @@ async def ask_question(request: QuestionRequest):
             "total_latency": result.get('total_latency', 0),
             "chunks_retrieved": len(result.get('retrieved_chunks', [])),
             "context_length": len(result.get('context', '')),
-            "response_length": len(result.get('answer', ''))
+            "response_length": len(result.get('answer', '')),
+            "retriever_type": retriever_type
         }
         
         response_data = {
@@ -204,7 +227,7 @@ async def ask_question(request: QuestionRequest):
 @router.post("/ask-question-stream")
 async def ask_question_stream(request: QuestionRequest):
     """Ask question with streaming response"""
-    global rag_service
+    global rag_service, llama_index_service
     
     if rag_service is None:
         raise HTTPException(status_code=400, detail="No PDFs uploaded yet. Please upload PDFs first.")
@@ -213,8 +236,15 @@ async def ask_question_stream(request: QuestionRequest):
         try:
             logger.info(f"Processing streaming question: {request.question[:50]}...")
             
+            retriever_type = request.settings.get('retrieverType', 'Hybrid (Dense + Sparse)')
+            active_retriever = rag_service.retriever
+            if retriever_type == 'LlamaIndex':
+                if llama_index_service is None or not llama_index_service.is_ready():
+                    raise HTTPException(status_code=400, detail="LlamaIndex retriever not ready. Please upload PDFs again.")
+                active_retriever = llama_index_service
+
             k = request.settings.get('numChunks', 3)
-            retrieved_chunks = rag_service.retriever.retrieve(request.question, k=k)
+            retrieved_chunks = active_retriever.retrieve(request.question, k=k)
             
             context_parts = []
             for chunk in retrieved_chunks:
@@ -237,7 +267,8 @@ async def ask_question_stream(request: QuestionRequest):
                         "generation_time": token_data.get('generation_time', 0),
                         "input_tokens": token_data.get('input_tokens', 0),
                         "output_tokens": token_counter.count(full_response),
-                        "response_length": len(full_response)
+                        "response_length": len(full_response),
+                        "retriever_type": retriever_type
                     }
                     yield f"data: {json.dumps({'complete': True, 'metrics': metrics, 'full_response': full_response})}\n\n"
                     break
@@ -256,6 +287,7 @@ async def get_status():
     
     return {
         "rag_service_loaded": rag_service is not None,
+        "llama_index_ready": llama_index_service is not None and llama_index_service.is_ready(),
         "timestamp": __import__('datetime').datetime.now().isoformat(),
         "models_loaded": {
             "embedding_model": model_manager._embedding_model is not None,

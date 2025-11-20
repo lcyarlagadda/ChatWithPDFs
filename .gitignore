@@ -7,6 +7,8 @@
 /frontend/.next
 /.pnp
 .pnp.js
+/docs/*.md
+/backend/services/__pycache__
 
 # testing
 /coverage

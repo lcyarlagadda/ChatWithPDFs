@@ -20,6 +20,7 @@ backend/
 │   ├── embedding_service.py  # Embedding generation
 │   ├── retrieval_service.py   # Hybrid retrieval
 │   ├── rag_service.py     # RAG pipeline
+│   ├── llama_index_service.py # LlamaIndex retriever
 │   └── cache_service.py   # Response caching
 ├── core/                   # Core infrastructure
 │   ├── __init__.py
@@ -110,6 +111,16 @@ backend/
   - `set()`: Cache response
   - `clear()`: Clear all cache
 
+#### `llama_index_service.py` - LlamaIndex Integration
+- **Responsibilities**:
+  - Build and maintain a `VectorStoreIndex` using LlamaIndex
+  - Offer an alternative retrieval backend selectable per question
+  - Preserve chunk metadata (citations, doc/page) inside LlamaIndex nodes
+
+- **Key Methods**:
+  - `build_index()`: Initialize the vector index from processed chunks
+  - `retrieve()`: Return top-k chunks via LlamaIndex retriever
+
 ### Core Layer (`core/`)
 
 **Purpose**: Infrastructure and model management
@@ -168,7 +179,7 @@ backend/
    - Reranker
    - Mistral-7B language model
    ↓
-7. Create HybridRetriever and RAGService
+7. Create HybridRetriever, optional LlamaIndex index, and RAGService
    ↓
 8. Return success with chunk count
 ```
@@ -183,7 +194,7 @@ backend/
    ↓
 3. RAGService.answer_question()
    a. Detect question type (general vs specific)
-   b. HybridRetriever.retrieve()
+   b. Retrieve chunks (Hybrid by default, LlamaIndex optional)
       - Dense: Query embedding → FAISS search
       - Sparse: Query tokens → BM25 search
       - Combine scores (60% dense + 40% sparse)

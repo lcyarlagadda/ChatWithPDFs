@@ -4,6 +4,7 @@ from .pdf_service import PDFService
 from .embedding_service import EmbeddingService
 from .retrieval_service import HybridRetriever
 from .rag_service import RAGService
+from .llama_index_service import LlamaIndexService
 from .cache_service import ResponseCache
 
 __all__ = [
@@ -11,6 +12,7 @@ __all__ = [
     'EmbeddingService', 
     'HybridRetriever',
     'RAGService',
+    'LlamaIndexService',
     'ResponseCache'
 ]
 

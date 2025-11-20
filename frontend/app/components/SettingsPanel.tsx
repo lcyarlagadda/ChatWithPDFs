@@ -63,6 +63,7 @@ export default function SettingsPanel({ settings, onSettingsChange }: SettingsPa
             <option value="Hybrid (Dense + Sparse)">Hybrid (Dense + Sparse)</option>
             <option value="Dense Only">Dense Only</option>
             <option value="Sparse Only">Sparse Only</option>
+            <option value="LlamaIndex">LlamaIndex</option>
           </select>
         </div>
 
