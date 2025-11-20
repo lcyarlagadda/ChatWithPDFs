@@ -5,7 +5,7 @@ import time
 from typing import Dict, List
 import logging
 
-from ..utils.tokenizer import TokenCounter
+from backend.utils.tokenizer import TokenCounter
 
 logger = logging.getLogger(__name__)
 

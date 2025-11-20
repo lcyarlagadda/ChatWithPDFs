@@ -9,8 +9,9 @@ from dataclasses import dataclass
 import time
 import logging
 
-from ..utils.text_processor import TextProcessor
-from ..utils.tokenizer import TokenCounter
+
+from backend.utils.text_processor import TextProcessor
+from backend.utils.tokenizer import TokenCounter
 
 logger = logging.getLogger(__name__)
 

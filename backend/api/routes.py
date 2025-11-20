@@ -10,14 +10,14 @@ import time
 import logging
 
 from .schemas import QuestionRequest, QuestionResponse
-from ..services.pdf_service import PDFService
-from ..services.embedding_service import EmbeddingService
-from ..services.retrieval_service import HybridRetriever
-from ..services.rag_service import RAGService
-from ..services.cache_service import ResponseCache
-from ..services.llama_index_service import LlamaIndexService
-from ..core.models import ModelManager
-
+from backend.services.pdf_service import PDFService
+from backend.services.embedding_service import EmbeddingService
+from backend.services.retrieval_service import HybridRetriever
+from backend.services.rag_service import RAGService
+from backend.services.cache_service import ResponseCache
+from backend.services.llama_index_service import LlamaIndexService
+from backend.core.models import ModelManager
+from ..utils.tokenizer import TokenCounter
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
